@@ -309,3 +309,146 @@ body {
   gap: 8px;
 }
 #empty-state .hint { font-size: 12px; color: var(--sg-gray-dark); }
+
+/* ── SIDEBAR SECTIONS ───────────────────────── */
+.sidebar-section { padding: 10px 0 4px; }
+.sidebar-section-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 6px;
+  font-size: 10px;
+  color: var(--sg-green);
+  letter-spacing: 0.1em;
+  font-weight: 700;
+}
+.sessions-section {
+  border-top: 1px solid var(--sg-gray-dark);
+  margin-top: 4px;
+  flex: 1;
+  overflow-y: auto;
+}
+.sidebar-sublabel {
+  padding: 4px 12px 2px;
+  font-size: 9px;
+  color: var(--sg-gray);
+  letter-spacing: 0.08em;
+}
+#new-session-btn {
+  background: none;
+  border: 1px solid var(--sg-gray-dark);
+  color: var(--sg-green);
+  border-radius: 3px;
+  width: 18px; height: 18px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.1s;
+}
+#new-session-btn:hover { background: var(--sg-dark-2); }
+
+/* ── AGENT ITEMS ────────────────────────────── */
+.agent-item.orchestrator .item-name { color: var(--sg-green); }
+.agent-badge { font-size: 9px; color: var(--sg-gray); margin-left: auto; }
+.agent-item.running .item-name { color: var(--busy); }
+
+/* ── SESSION ITEMS ──────────────────────────── */
+.sessions-empty { padding: 6px 14px; font-size: 11px; color: var(--sg-gray-dark); }
+.session-item .session-del {
+  display: none;
+  background: none; border: none;
+  color: var(--sg-gray);
+  cursor: pointer; font-size: 14px; padding: 0 2px;
+  margin-left: auto;
+}
+.session-item:hover .session-del { display: block; }
+.session-item:hover .session-del:hover { color: var(--error); }
+
+/* ── CONN STATUS ────────────────────────────── */
+.status.offline { color: var(--sg-gray); }
+.status.online  { color: var(--sg-green); }
+
+/* ── SUBAGENT MSG ───────────────────────────── */
+.msg.subagent .msg-bubble {
+  background: #071520;
+  border: 1px solid #0d2d44;
+  border-left: 3px solid var(--sg-cyan);
+  align-self: flex-start;
+  color: #9dd8f5;
+  font-size: 12px;
+}
+
+/* ── TOOL CARD ──────────────────────────────── */
+.tool-card {
+  border: 1px solid var(--sg-gray-dark);
+  border-radius: 4px;
+  margin: 6px 0;
+  overflow: hidden;
+  font-size: 12px;
+}
+.tool-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px;
+  background: var(--sg-dark-2);
+  cursor: pointer;
+  user-select: none;
+}
+.tool-icon { color: var(--sg-green); }
+.tool-name { color: var(--sg-white); font-weight: 600; flex: 1; }
+.tool-chevron { color: var(--sg-gray); font-size: 10px; transition: transform 0.15s; }
+.tool-card.open .tool-chevron { transform: rotate(90deg); }
+.tool-body { display: none; padding: 8px 10px; background: #0a0a0a; }
+.tool-card.open .tool-body { display: block; }
+.tool-args {
+  color: var(--sg-gray-light); white-space: pre-wrap;
+  word-break: break-all; margin-bottom: 6px; font-size: 11px;
+}
+.tool-result.pending { color: var(--sg-gray); font-style: italic; }
+.tool-result.done    { color: #c8edb8; white-space: pre-wrap; word-break: break-word; }
+
+/* ── INTERRUPT CARD ─────────────────────────── */
+.interrupt-card {
+  border: 1px solid #5a3a00;
+  border-left: 3px solid var(--busy);
+  border-radius: 4px;
+  background: #1a1000;
+  padding: 10px 12px;
+  margin: 8px 0;
+}
+.interrupt-title { color: var(--busy); font-weight: 600; margin-bottom: 6px; font-size: 13px; }
+.interrupt-args {
+  color: var(--sg-gray-light); font-size: 11px;
+  white-space: pre-wrap; word-break: break-all;
+  margin-bottom: 8px;
+}
+.interrupt-actions { display: flex; gap: 8px; }
+.approve-btn, .reject-btn {
+  padding: 5px 14px; border: none; border-radius: 4px;
+  font-family: var(--font-mono); font-size: 12px;
+  font-weight: 700; cursor: pointer; transition: opacity 0.15s;
+}
+.approve-btn { background: var(--sg-green); color: #000; }
+.approve-btn:hover { opacity: 0.85; }
+.reject-btn  { background: var(--sg-gray-dark); color: var(--sg-white); }
+.reject-btn:hover { background: var(--error); }
+.interrupt-card.resolved { border-color: var(--sg-gray-dark); border-left-color: var(--sg-gray); opacity: 0.7; }
+.resolved-label { font-size: 12px; color: var(--sg-green); }
+.resolved-label.rejected { color: var(--error); }
+
+/* ── MARKDOWN in bubbles ────────────────────── */
+.msg-bubble p  { margin: 0 0 6px; }
+.msg-bubble p:last-child { margin-bottom: 0; }
+.msg-bubble code {
+  background: #0a0a0a; padding: 1px 4px;
+  border-radius: 3px; font-size: 11px;
+}
+.msg-bubble pre {
+  background: #0a0a0a; padding: 8px; border-radius: 4px;
+  overflow-x: auto; margin: 4px 0;
+}
+.msg-bubble pre code { background: none; padding: 0; }
+.msg-bubble ul, .msg-bubble ol { padding-left: 18px; margin: 4px 0; }
+.msg-bubble li { margin: 2px 0; }
+.msg-bubble strong { color: var(--sg-white); }
+.msg-bubble a { color: var(--sg-cyan); }

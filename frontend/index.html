@@ -5,52 +5,56 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SeaMate — Multi-Agent Workspace</title>
   <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
   <!-- ── Topbar ──────────────────────────────────────────────── -->
   <div id="topbar">
     <span class="logo">SeaMate</span>
-    <span class="status">live</span>
+    <span id="conn-status" class="status offline">connecting...</span>
   </div>
 
   <!-- ── Layout ──────────────────────────────────────────────── -->
   <div id="layout">
 
-    <!-- Sidebar -->
+    <!-- ── Sidebar ─────────────────────────────────────────── -->
     <nav id="sidebar">
-      <!-- populated by app.js -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">AGENTS</div>
+        <div id="agents-list"></div>
+      </div>
+      <div class="sidebar-section sessions-section">
+        <div class="sidebar-section-label">
+          SESSIONS
+          <button id="new-session-btn" title="New session">+</button>
+        </div>
+        <div id="sessions-list"></div>
+      </div>
     </nav>
 
-    <!-- Main panel -->
+    <!-- ── Main Panel ───────────────────────────────────────── -->
     <div id="main">
-
-      <!-- Agent header -->
       <div id="agent-header">
-        <span class="agent-meta">select an agent →</span>
+        <div class="dot" id="header-dot"></div>
+        <span id="header-title" class="agent-title">SeaMate</span>
+        <span id="header-meta" class="agent-meta">· select or create a session →</span>
       </div>
 
-      <!-- Empty state -->
-      <div id="empty-state">
-        <span>no agent selected</span>
-        <span class="hint">pick one from the sidebar</span>
+      <div id="output">
+        <div id="empty-state">
+          <span>no session selected</span>
+          <span class="hint">pick a session or press + to start</span>
+        </div>
       </div>
 
-      <!-- Output -->
-      <div id="output"></div>
-
-      <!-- Input bar -->
       <div id="input-bar">
-        <span id="agent-label">—</span>
-        <input
-          id="msg-input"
-          type="text"
+        <span id="agent-label">seamate</span>
+        <input id="msg-input" type="text"
           placeholder="type message and press Enter..."
-          autocomplete="off"
-        />
+          autocomplete="off" disabled />
         <button id="send-btn" disabled>Send</button>
       </div>
-
     </div>
   </div>
 

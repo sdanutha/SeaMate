@@ -21,7 +21,9 @@
       "WebFetch(domain:langchain-ai.github.io)",
       "Bash(uv pip install deepagents langgraph)",
       "Bash(git init)",
-      "Bash(git add .gitignore .claude/ frontend/ backend/main.py backend/requirements.txt backend/.env.example backend/agents/ backend/routers/)"
+      "Bash(git add .gitignore .claude/ frontend/ backend/main.py backend/requirements.txt backend/.env.example backend/agents/ backend/routers/)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:www.seagate.com)"
     ]
   }
 }

@@ -6,7 +6,9 @@ import os
 
 load_dotenv()
 
+from db.sessions import init_db
 from routers.agents import router as agents_router
+from routers.sessions import router as sessions_router
 from routers.ws import router as ws_router
 
 app = FastAPI(title="SeaMate - Multi-Agent Workspace")
@@ -18,7 +20,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.on_event("startup")
+def startup():
+    init_db()
+
+
 app.include_router(agents_router)
+app.include_router(sessions_router)
 app.include_router(ws_router)
 
 # Serve frontend static files
