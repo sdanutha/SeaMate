@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "maw-frontend-preview",
+      "name": "seamate-frontend-preview",
       "runtimeExecutable": "/opt/homebrew/bin/npx",
       "runtimeArgs": ["serve", "/Users/sdanutha/Documents/maw/frontend", "-p", "3456", "--no-clipboard"],
       "port": 3456

@@ -1,6 +1,6 @@
 from .base_agent import BaseAgent
 
-# ตัวอย่าง agents จัดกลุ่มแบบ MAW
+# ตัวอย่าง agents จัดกลุ่มแบบ SeaMate
 AGENT_GROUPS = {
     "1-ORACLES": [
         BaseAgent("pulse-oracle", "pulse-oracle", "You are Pulse Oracle, a real-time monitoring assistant. Respond concisely."),

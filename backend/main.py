@@ -9,7 +9,7 @@ load_dotenv()
 from routers.agents import router as agents_router
 from routers.ws import router as ws_router
 
-app = FastAPI(title="MAW - Multi-Agent Workspace")
+app = FastAPI(title="SeaMate - Multi-Agent Workspace")
 
 app.add_middleware(
     CORSMiddleware,
