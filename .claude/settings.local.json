@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Claude_Preview__preview_start",
+      "Bash(uv pip install --system fastapi uvicorn websockets langchain langchain-openai langchain-core python-dotenv pydantic)",
+      "Bash(uv pip install --user fastapi uvicorn websockets langchain langchain-openai langchain-core python-dotenv pydantic)",
+      "Bash(pip3 install --user --quiet fastapi uvicorn websockets langchain langchain-openai langchain-core python-dotenv pydantic)",
+      "Bash(python3 -m site --user-base)",
+      "Bash(npx serve --version)",
+      "Bash(curl -s http://localhost:11434/api/tags)",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(m[''name'']\\) for m in data.get\\(''models'',[]\\)]\")",
+      "Bash(source .venv/bin/activate)",
+      "Bash(uv pip install langchain-ollama)",
+      "Bash(python3 -c \"from langchain_ollama import ChatOllama; llm = ChatOllama\\(model=''gpt-oss:20b''\\); print\\(''OK''\\)\")",
+      "Bash(python3 -c \":*)",
+      "WebFetch(domain:docs.langchain.com)",
+      "WebFetch(domain:reference.langchain.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:pypi.org)",
+      "WebFetch(domain:langchain-ai.github.io)",
+      "Bash(uv pip install deepagents langgraph)",
+      "Bash(git init)",
+      "Bash(git add .gitignore .claude/ frontend/ backend/main.py backend/requirements.txt backend/.env.example backend/agents/ backend/routers/)"
+    ]
+  }
+}

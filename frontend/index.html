@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>maw — Multi-Agent Workspace</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+  <!-- ── Topbar ──────────────────────────────────────────────── -->
+  <div id="topbar">
+    <span class="logo">maw</span>
+    <span class="status">live</span>
+  </div>
+
+  <!-- ── Layout ──────────────────────────────────────────────── -->
+  <div id="layout">
+
+    <!-- Sidebar -->
+    <nav id="sidebar">
+      <!-- populated by app.js -->
+    </nav>
+
+    <!-- Main panel -->
+    <div id="main">
+
+      <!-- Agent header -->
+      <div id="agent-header">
+        <span class="agent-meta">select an agent →</span>
+      </div>
+
+      <!-- Empty state -->
+      <div id="empty-state">
+        <span>no agent selected</span>
+        <span class="hint">pick one from the sidebar</span>
+      </div>
+
+      <!-- Output -->
+      <div id="output"></div>
+
+      <!-- Input bar -->
+      <div id="input-bar">
+        <span id="agent-label">—</span>
+        <input
+          id="msg-input"
+          type="text"
+          placeholder="type message and press Enter..."
+          autocomplete="off"
+        />
+        <button id="send-btn" disabled>Send</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
