@@ -1,4 +1,6 @@
-# base_agent.py — kept for backward compatibility & subagent config helpers
+# base_agent.py — kept for backward compatibility
 # The main agent is now the orchestrator (agents/orchestrator.py).
 
-SUBAGENT_NAMES = ["researcher", "coder", "file-manager"]
+from .orchestrator import SUBAGENTS
+
+SUBAGENT_NAMES = [sa["name"] for sa in SUBAGENTS]
