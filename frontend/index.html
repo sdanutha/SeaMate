@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,6 +12,8 @@
   <!-- ── Topbar ──────────────────────────────────────────────── -->
   <div id="topbar">
     <span class="logo">SeaMate</span>
+    <div class="topbar-spacer"></div>
+    <button id="theme-toggle" title="Toggle dark/light mode">☀</button>
     <span id="conn-status" class="status offline">connecting...</span>
   </div>
 
@@ -24,29 +26,11 @@
         <div class="sidebar-section-label">AGENTS</div>
         <div id="agents-list"></div>
       </div>
-      <div class="sidebar-section sessions-section">
-        <div class="sidebar-section-label">
-          SESSIONS
-          <button id="new-session-btn" title="New session">+</button>
-        </div>
-        <div id="sessions-list"></div>
-      </div>
     </nav>
 
     <!-- ── Main Panel ───────────────────────────────────────── -->
     <div id="main">
-      <div id="agent-header">
-        <div class="dot" id="header-dot"></div>
-        <span id="header-title" class="agent-title">SeaMate</span>
-        <span id="header-meta" class="agent-meta">· select or create a session →</span>
-      </div>
-
-      <div id="output">
-        <div id="empty-state">
-          <span>no session selected</span>
-          <span class="hint">pick a session or press + to start</span>
-        </div>
-      </div>
+      <div id="output"></div>
 
       <div id="input-bar">
         <span id="agent-label">seamate</span>

@@ -3,13 +3,10 @@ import textwrap
 from langchain_ollama import ChatOllama
 from langchain_core.tools import tool
 from langchain_community.tools import DuckDuckGoSearchRun
-from langgraph.checkpoint.sqlite import SqliteSaver
-import sqlite3
 from deepagents import create_deep_agent
 
 _OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 _DEFAULT_MODEL   = os.getenv("OLLAMA_MODEL", "gpt-oss:20b")
-_DB_PATH         = os.getenv("SEAMATE_DB", "seamate.db")
 
 # ── Tools ────────────────────────────────────────────────────────────────────
 
@@ -98,23 +95,17 @@ ORCHESTRATOR_PROMPT = textwrap.dedent("""
 
 # ── Factory ──────────────────────────────────────────────────────────────────
 
-_graph = None  # singleton
 
-
-def get_orchestrator():
-    global _graph
-    if _graph is None:
-        llm = ChatOllama(model=_DEFAULT_MODEL, base_url=_OLLAMA_BASE_URL)
-        conn = sqlite3.connect(_DB_PATH, check_same_thread=False)
-        checkpointer = SqliteSaver(conn)
-        _graph = create_deep_agent(
-            model=llm,
-            system_prompt=ORCHESTRATOR_PROMPT,
-            subagents=SUBAGENTS,
-            checkpointer=checkpointer,
-            interrupt_on={
-                "python_repl": True,
-                "write_file": True,
-            },
-        )
-    return _graph
+def build_orchestrator(checkpointer):
+    """Build a new orchestrator graph using the provided async checkpointer."""
+    llm = ChatOllama(model=_DEFAULT_MODEL, base_url=_OLLAMA_BASE_URL)
+    return create_deep_agent(
+        model=llm,
+        system_prompt=ORCHESTRATOR_PROMPT,
+        subagents=SUBAGENTS,
+        checkpointer=checkpointer,
+        interrupt_on={
+            "python_repl": True,
+            "write_file": True,
+        },
+    )

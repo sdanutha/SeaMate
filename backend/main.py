@@ -6,12 +6,12 @@ import os
 
 load_dotenv()
 
-from db.sessions import init_db
+from langgraph.checkpoint.memory import MemorySaver
+from agents.orchestrator import build_orchestrator
 from routers.agents import router as agents_router
-from routers.sessions import router as sessions_router
 from routers.ws import router as ws_router
 
-app = FastAPI(title="SeaMate - Multi-Agent Workspace")
+app = FastAPI(title="SeaMate")
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,16 +20,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.on_event("startup")
-def startup():
-    init_db()
-
+# In-memory checkpointer — no DB needed
+app.state.graph = build_orchestrator(MemorySaver())
 
 app.include_router(agents_router)
-app.include_router(sessions_router)
 app.include_router(ws_router)
 
-# Serve frontend static files
 frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
 app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
