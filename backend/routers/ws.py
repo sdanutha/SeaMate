@@ -6,8 +6,19 @@ Single /ws endpoint, streams AI tokens back.
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import json
 import uuid
+import logging
 
 router = APIRouter()
+log = logging.getLogger("seamate.ws")
+
+
+async def _safe_send(ws: WebSocket, data: dict) -> bool:
+    """Send JSON to the WebSocket. Returns False if the client is gone."""
+    try:
+        await ws.send_json(data)
+        return True
+    except (WebSocketDisconnect, RuntimeError):
+        return False
 
 
 @router.websocket("/ws")
@@ -18,14 +29,19 @@ async def websocket_chat(websocket: WebSocket):
     thread_id = str(uuid.uuid4())
     config = {"configurable": {"thread_id": thread_id}}
 
-    await websocket.send_json({
+    if not await _safe_send(websocket, {
         "type": "status", "content": "Connected to SeaMate"
-    })
+    }):
+        return
 
     try:
         while True:
             raw = await websocket.receive_text()
-            payload = json.loads(raw)
+
+            try:
+                payload = json.loads(raw)
+            except json.JSONDecodeError:
+                continue
 
             if payload.get("type") != "message":
                 continue
@@ -34,7 +50,8 @@ async def websocket_chat(websocket: WebSocket):
             if not user_text:
                 continue
 
-            await websocket.send_json({"type": "agent_start"})
+            if not await _safe_send(websocket, {"type": "agent_start"}):
+                return
 
             try:
                 async for event in graph.astream(
@@ -77,16 +94,24 @@ async def websocket_chat(websocket: WebSocket):
                     ):
                         continue
 
-                    await websocket.send_json({
+                    if not await _safe_send(websocket, {
                         "type": "token", "content": content
-                    })
+                    }):
+                        return
 
+            except WebSocketDisconnect:
+                return
             except Exception as e:
-                await websocket.send_json({
+                log.warning("Stream error: %s", e)
+                if not await _safe_send(websocket, {
                     "type": "error", "content": str(e)
-                })
+                }):
+                    return
 
-            await websocket.send_json({"type": "agent_end"})
+            if not await _safe_send(websocket, {"type": "agent_end"}):
+                return
 
     except WebSocketDisconnect:
         pass
+    except Exception as e:
+        log.error("WebSocket fatal: %s", e)
