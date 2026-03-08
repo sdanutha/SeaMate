@@ -379,7 +379,8 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-/* User bubble */
+/* User meta + bubble — right-aligned */
+.msg.user .msg-meta { align-self: flex-end; }
 .msg.user .msg-bubble {
   background: var(--bbl-user-bg);
   border: 1px solid var(--bbl-user-border);

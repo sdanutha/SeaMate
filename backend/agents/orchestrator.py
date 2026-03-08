@@ -1,4 +1,5 @@
 import os
+import subprocess
 import textwrap
 from langchain_ollama import ChatOllama
 from langchain_core.tools import tool
@@ -12,6 +13,7 @@ _DEFAULT_MODEL   = os.getenv("OLLAMA_MODEL", "gpt-oss:20b")
 
 _ddg = DuckDuckGoSearchRun()
 
+
 @tool
 def web_search(query: str) -> str:
     """Search the web using DuckDuckGo. Returns a summary of results."""
@@ -19,13 +21,50 @@ def web_search(query: str) -> str:
 
 
 @tool
+def run_command(command: str) -> str:
+    """Run a shell command in the terminal and return its output.
+
+    Use this for any terminal/CLI task: ls, cat, pip, git, curl, etc.
+    The command runs in a bash shell with a 30-second timeout.
+    Requires approval before execution.
+    """
+    try:
+        result = subprocess.run(
+            command,
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=os.getcwd(),
+        )
+        output = ""
+        if result.stdout:
+            output += result.stdout
+        if result.stderr:
+            output += ("\n--- stderr ---\n" + result.stderr) if output else result.stderr
+        if not output:
+            output = f"(exit code {result.returncode}, no output)"
+        return output[:4000]  # cap output length
+    except subprocess.TimeoutExpired:
+        return "Error: command timed out after 30 seconds"
+    except Exception as e:
+        return f"Error: {e}"
+
+
+@tool
 def python_repl(code: str) -> str:
-    """Execute Python code and return stdout/result. Requires approval."""
-    import io, contextlib
+    """Execute a Python code snippet and return its stdout output.
+
+    Pass the full Python code as a single string.
+    Example: python_repl(code="print(2 + 2)")
+    Requires approval before execution.
+    """
+    import io
+    import contextlib
     buf = io.StringIO()
     try:
         with contextlib.redirect_stdout(buf):
-            exec(code, {})  # noqa: S102
+            exec(code, {"__builtins__": __builtins__})  # noqa: S102
         return buf.getvalue() or "(no output)"
     except Exception as e:
         return f"Error: {e}"
@@ -36,14 +75,17 @@ def read_file(path: str) -> str:
     """Read a file from disk and return its contents."""
     try:
         with open(path) as f:
-            return f.read()
+            content = f.read()
+        if len(content) > 8000:
+            return content[:8000] + f"\n... (truncated, {len(content)} chars total)"
+        return content
     except Exception as e:
         return f"Error: {e}"
 
 
 @tool
 def write_file(path: str, content: str) -> str:
-    """Write content to a file. Requires approval."""
+    """Write content to a file on disk. Requires approval."""
     try:
         with open(path, "w") as f:
             f.write(content)
@@ -63,9 +105,20 @@ SUBAGENTS = [
     },
     {
         "name": "coder",
-        "description": "Writes and executes Python code to solve problems or process data.",
-        "system_prompt": "You are a Python expert. Write clean, correct code and run it with python_repl. Show your reasoning.",
-        "tools": [python_repl],
+        "description": "Writes and executes Python code or shell commands.",
+        "system_prompt": textwrap.dedent("""\
+            You are a code and terminal specialist.
+
+            You have two tools:
+            - python_repl: Execute Python code. Pass code as a string argument.
+              Example: python_repl(code="print('hello')")
+            - run_command: Execute a shell/terminal command.
+              Example: run_command(command="ls -la")
+
+            Choose the right tool for the task. Use run_command for terminal tasks
+            (ls, cat, pip, git, curl, etc.) and python_repl for Python scripts.
+        """).strip(),
+        "tools": [python_repl, run_command],
     },
     {
         "name": "file-manager",
@@ -77,16 +130,17 @@ SUBAGENTS = [
 
 # ── Orchestrator prompt ──────────────────────────────────────────────────────
 
-ORCHESTRATOR_PROMPT = textwrap.dedent("""
+ORCHESTRATOR_PROMPT = textwrap.dedent("""\
     You are SeaMate, an intelligent orchestrator for Seagate's digital workforce.
 
     You coordinate a team of specialized subagents:
-    - researcher : searches the web for information
-    - coder      : writes and runs Python code
-    - file-manager : reads and writes files
+    - researcher    : searches the web for information
+    - coder         : runs Python code or shell/terminal commands
+    - file-manager  : reads and writes files
 
     Guidelines:
     - Decompose complex tasks and delegate to the right subagent.
+    - For terminal/CLI tasks, delegate to the coder subagent.
     - Always explain what you are doing and why.
     - Be concise but thorough in your final answers.
     - When a subagent finishes, summarize its findings for the user.
@@ -106,6 +160,7 @@ def build_orchestrator(checkpointer):
         checkpointer=checkpointer,
         interrupt_on={
             "python_repl": True,
+            "run_command": True,
             "write_file": True,
         },
     )
