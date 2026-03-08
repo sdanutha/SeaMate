@@ -564,6 +564,11 @@ html[data-theme="light"] .msg.error .msg-bubble { color: #c62828; }
   font-size: 14px;
   display: flex; align-items: center; gap: 6px;
 }
+.interrupt-tool {
+  color: var(--text-primary);
+  font-size: 13px;
+  margin-bottom: 6px;
+}
 .interrupt-args {
   font-family: var(--font-mono);
   color: var(--text-secondary);

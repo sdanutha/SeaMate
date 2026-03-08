@@ -3,6 +3,7 @@ import { ChatSocket } from "./ws.js";
 // ── State ─────────────────────────────────────────────────────────────────────
 let socket = null;
 let streamingBubble = null;
+let currentAgent = null;       // which agent is currently streaming
 let sending = false;
 let agentsData = {};          // cached API response
 
@@ -200,6 +201,52 @@ function finalizeStreamBubble(bubble) {
   if (bubble._raw) bubble.innerHTML = renderMarkdown(bubble._raw);
 }
 
+// ── Sidebar busy dots ────────────────────────────────────────────────────────
+function setAgentBusy(agentId) {
+  const dot = document.querySelector(`.agent-item[data-agent-id="${agentId}"] .dot`);
+  if (dot) { dot.classList.remove("online"); dot.classList.add("busy"); }
+}
+
+function clearAllBusyDots() {
+  document.querySelectorAll(".agent-item .dot.busy").forEach((d) => {
+    d.classList.remove("busy");
+    d.classList.add("online");
+  });
+}
+
+// ── Interrupt cards ──────────────────────────────────────────────────────────
+function buildInterruptCard({ interrupt_id, tool, args, description }) {
+  const card = document.createElement("div");
+  card.className = "interrupt-card";
+  card.id = `interrupt-${interrupt_id}`;
+  card.innerHTML = `
+    <div class="interrupt-title">Approval Required</div>
+    <div class="interrupt-tool"><strong>${tool}</strong></div>
+    <pre class="interrupt-args">${JSON.stringify(args, null, 2)}</pre>
+    <div class="interrupt-actions">
+      <button class="approve-btn">Approve</button>
+      <button class="reject-btn">Reject</button>
+    </div>`;
+  card.querySelector(".approve-btn").addEventListener("click", () =>
+    resolveInterrupt(interrupt_id, "approve")
+  );
+  card.querySelector(".reject-btn").addEventListener("click", () =>
+    resolveInterrupt(interrupt_id, "reject")
+  );
+  output.appendChild(card);
+  scrollBottom();
+}
+
+function resolveInterrupt(id, decision) {
+  socket.sendInterruptResponse(id, decision);
+  const card = document.getElementById(`interrupt-${id}`);
+  if (card) {
+    card.classList.add("resolved");
+    card.querySelector(".interrupt-actions").innerHTML =
+      `<span class="resolved-label">${decision === "approve" ? "Approved" : "Rejected"}</span>`;
+  }
+}
+
 // ── Send ──────────────────────────────────────────────────────────────────────
 function sendMessage() {
   const text = msgInput.value.trim();
@@ -241,16 +288,39 @@ function connectChat() {
       sending = false;
     },
     onAgentStart: () => {
-      streamingBubble = createStreamBubble("seamate", "agent");
+      currentAgent = null;
+      streamingBubble = null;
     },
-    onToken: (content) => {
-      if (!streamingBubble) streamingBubble = createStreamBubble("seamate", "agent");
+    onToken: (content, agent) => {
+      // If agent changed, finalize old bubble and start new one
+      if (agent !== currentAgent) {
+        finalizeStreamBubble(streamingBubble);
+        const type = agent === "seamate" ? "agent" : "subagent";
+        streamingBubble = createStreamBubble(agent, type);
+        currentAgent = agent;
+
+        // Update sidebar busy dot for subagents
+        if (agent !== "seamate") setAgentBusy(agent);
+      }
+      if (!streamingBubble) {
+        const type = agent === "seamate" ? "agent" : "subagent";
+        streamingBubble = createStreamBubble(agent, type);
+        currentAgent = agent;
+      }
       appendToken(streamingBubble, content);
+    },
+    onInterrupt: (data) => {
+      // Finalize any streaming bubble before showing interrupt card
+      finalizeStreamBubble(streamingBubble);
+      streamingBubble = null;
+      buildInterruptCard(data);
     },
     onAgentEnd: () => {
       finalizeStreamBubble(streamingBubble);
       streamingBubble = null;
+      currentAgent = null;
       sending = false;
+      clearAllBusyDots();
       setInputEnabled(true);
     },
   });
