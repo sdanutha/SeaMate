@@ -102,7 +102,7 @@ body, #sidebar, #main, #agent-header, #input-bar, #output,
 .sidebar-item, .msg-bubble, .tool-card, .interrupt-card,
 .tool-header, .tool-body, #msg-input, #empty-state,
 #agent-detail, .detail-header, .detail-body, .detail-prompt,
-.detail-tool-card, .detail-skill-tag {
+.detail-tool-card, .detail-skill-card {
   transition:
     background var(--speed) var(--ease),
     color var(--speed) var(--ease),
@@ -820,26 +820,32 @@ html[data-theme="light"] .msg-bubble code { background: rgba(0,0,0,.07); }
   line-height: 1.5;
 }
 
-/* Skill tags */
+/* Skill cards */
 .detail-skills {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
+  gap: 8px;
 }
-.detail-skill-tag {
-  display: inline-block;
-  background: rgba(110,190,73,.08);
-  border: 1px solid rgba(110,190,73,.2);
-  color: var(--sg-green);
-  font-size: 11px;
+.detail-skill-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  transition: border-color .15s;
+}
+.detail-skill-card:hover {
+  border-color: var(--sg-green);
+}
+.detail-skill-name {
+  font-size: 13px;
   font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 20px;
-  letter-spacing: .02em;
+  color: var(--text);
+  margin-bottom: 4px;
 }
-html[data-theme="light"] .detail-skill-tag {
-  background: rgba(110,190,73,.1);
-  color: var(--sg-green-dark);
+.detail-skill-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
 }
 
 .detail-empty {

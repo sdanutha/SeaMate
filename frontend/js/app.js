@@ -121,13 +121,17 @@ function showAgentDetail(agentId) {
   detailSkills.innerHTML = "";
   if (agent.skills && agent.skills.length > 0) {
     agent.skills.forEach((s) => {
-      const tag = document.createElement("span");
-      tag.className = "detail-skill-tag";
-      tag.textContent = s;
-      detailSkills.appendChild(tag);
+      const card = document.createElement("div");
+      card.className = "detail-skill-card";
+      const name = typeof s === "string" ? s : s.name;
+      const desc = typeof s === "string" ? "" : s.description || "";
+      card.innerHTML = `
+        <div class="detail-skill-name">📘 ${name}</div>
+        ${desc ? `<div class="detail-skill-desc">${desc}</div>` : ""}`;
+      detailSkills.appendChild(card);
     });
   } else {
-    detailSkills.innerHTML = `<span class="detail-empty">—</span>`;
+    detailSkills.innerHTML = `<span class="detail-empty">No skills loaded</span>`;
   }
 
   // Show panel
