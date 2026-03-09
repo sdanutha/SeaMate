@@ -22,32 +22,17 @@ async def _safe_send(ws: WebSocket, data: dict) -> bool:
         return False
 
 
-def _agent_from_namespace(namespace: tuple) -> str:
-    """Extract agent name from LangGraph namespace tuple.
-
-    ()                          → "seamate"   (orchestrator)
-    ("researcher:abc123",)      → "researcher"
-    ("coder:xyz789",)           → "coder"
-    ("file-manager:def456",)    → "file-manager"
-    """
-    if not namespace:
-        return "seamate"
-    first = namespace[0]
-    name = first.split(":")[0] if ":" in first else first
-    return name
-
-
 async def _stream_events(ws: WebSocket, graph, input_data, config: dict) -> bool:
     """Stream graph events to the WebSocket client.
 
     Returns True if streaming completed normally, False if client disconnected.
 
     Subagent identification:
-      DeepAgents dispatches all subagents through a single "tools" node, so the
+      DeepAgents routes all subagents through a single "tools" node, so the
       LangGraph namespace is always ('tools:<uuid>',) regardless of which
-      subagent is active.  To identify the *actual* subagent, we track
-      tool_call_chunks from the orchestrator (namespace=()) — the tool call
-      name matches the subagent name (e.g. "researcher", "coder").
+      subagent is active.  To identify the *actual* subagent, we look at
+      completed tool_calls from the orchestrator (namespace=()) where
+      tool name is "task" — the args contain "subagent_type".
     """
     active_subagent = "subagent"  # fallback label
 

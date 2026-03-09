@@ -1,0 +1,56 @@
+model:
+  provider: ollama
+  name: "${OLLAMA_MODEL:-gpt-oss:20b}"
+  base_url: "${OLLAMA_BASE_URL:-http://localhost:11434}"
+
+orchestrator:
+  name: seamate
+  description: "Intelligent orchestrator for Seagate's digital workforce"
+  # system_prompt is auto-generated from subagents list if omitted.
+  # Uncomment below to override:
+  # system_prompt: |
+  #   You are SeaMate, ...
+  skills:
+    - delegate tasks
+    - coordinate subagents
+    - summarize results
+
+interrupt_on:
+  - python_repl
+  - run_command
+  - write_file
+
+subagents:
+  - name: researcher
+    description: "Searches the web to gather information on a topic."
+    system_prompt: >
+      You are a research specialist. Use the web_search tool
+      to find accurate, up-to-date information. Always cite your sources.
+    tools:
+      - web_search
+
+  - name: coder
+    description: "Writes and executes Python code or shell commands."
+    system_prompt: |
+      You are a code and terminal specialist.
+
+      You have two tools:
+      - python_repl: Execute Python code. Pass code as a string argument.
+        Example: python_repl(code="print('hello')")
+      - run_command: Execute a shell/terminal command.
+        Example: run_command(command="ls -la")
+
+      Choose the right tool for the task. Use run_command for terminal tasks
+      (ls, cat, pip, git, curl, etc.) and python_repl for Python scripts.
+    tools:
+      - python_repl
+      - run_command
+
+  - name: file-manager
+    description: "Reads and writes files on the local filesystem."
+    system_prompt: >
+      You are a file management specialist.
+      Use read_file and write_file carefully.
+    tools:
+      - read_file
+      - write_file

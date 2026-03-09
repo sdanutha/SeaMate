@@ -1,20 +1,20 @@
 import { ChatSocket } from "./ws.js";
 
-// ── State ─────────────────────────────────────────────────────────────────────
-let socket = null;
-let streamingBubble = null;
-let currentAgent = null;       // which agent is currently streaming
-let sending = false;
-let agentsData = {};          // cached API response
+// ── Application state ────────────────────────────────────────────────────────
+let socket          = null;   // ChatSocket instance
+let streamingBubble = null;   // the <div> currently receiving streamed tokens
+let currentAgent    = null;   // name of the agent whose bubble is open
+let sending         = false;  // true while waiting for agent_end
+let agentsData      = {};     // id → agent object (cached from /api/agents/)
 
-// ── DOM ───────────────────────────────────────────────────────────────────────
-const output      = document.getElementById("output");
-const msgInput    = document.getElementById("msg-input");
-const sendBtn     = document.getElementById("send-btn");
-const connStatus  = document.getElementById("conn-status");
-const agentsList  = document.getElementById("agents-list");
+// ── DOM references ───────────────────────────────────────────────────────────
+const output     = document.getElementById("output");
+const msgInput   = document.getElementById("msg-input");
+const sendBtn    = document.getElementById("send-btn");
+const connStatus = document.getElementById("conn-status");
+const agentsList = document.getElementById("agents-list");
 
-// Detail panel
+// Agent detail panel (right sidebar)
 const detailPanel  = document.getElementById("agent-detail");
 const detailName   = document.getElementById("detail-name");
 const detailRole   = document.getElementById("detail-role");
@@ -23,26 +23,33 @@ const detailTools  = document.getElementById("detail-tools");
 const detailSkills = document.getElementById("detail-skills");
 const detailClose  = document.getElementById("detail-close");
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── UI helpers ───────────────────────────────────────────────────────────────
+
+/** Current time string for message timestamps (HH:MM:SS). */
 const ts = () =>
   new Date().toLocaleTimeString("th-TH", {
     hour: "2-digit", minute: "2-digit", second: "2-digit",
   });
 
+/** Keep chat scrolled to the latest message. */
 function scrollBottom() { output.scrollTop = output.scrollHeight; }
 
+/** Update connection badge in the topbar. */
 function setConnected(ok) {
   connStatus.textContent = ok ? "LIVE" : "OFFLINE";
   connStatus.className   = `status ${ok ? "online" : "offline"}`;
 }
 
+/** Enable / disable the chat input and send button. */
 function setInputEnabled(enabled) {
   msgInput.disabled = !enabled;
   sendBtn.disabled  = !enabled;
   if (enabled) msgInput.focus();
 }
 
-// ── Load agents sidebar ───────────────────────────────────────────────────────
+// ── Sidebar: load agent list from API ─────────────────────────────────────────
+
+/** Fetch /api/agents/ and populate the left sidebar with agent items. */
 async function loadAgents() {
   try {
     const res = await fetch("/api/agents/");
@@ -72,10 +79,14 @@ async function loadAgents() {
         agentsList.appendChild(item);
       });
     }
-  } catch (_) {}
+  } catch (err) {
+    console.warn("Failed to load agents:", err);
+  }
 }
 
-// ── Agent detail panel ───────────────────────────────────────────────────────
+// ── Sidebar: agent detail panel (right side) ─────────────────────────────────
+
+/** Open the detail panel showing an agent's role, prompt, tools, skills. */
 function showAgentDetail(agentId) {
   const agent = agentsData[agentId];
   if (!agent) return;
@@ -130,7 +141,9 @@ function hideAgentDetail() {
 
 detailClose.addEventListener("click", hideAgentDetail);
 
-// ── Message builders ──────────────────────────────────────────────────────────
+// ── Chat bubble builders ─────────────────────────────────────────────────────
+
+/** Append a gray system-status message (e.g. "Connected to SeaMate"). */
 function appendStatus(text) {
   const el = document.createElement("div");
   el.className = "msg status";
@@ -139,6 +152,7 @@ function appendStatus(text) {
   scrollBottom();
 }
 
+/** Append a red error message. */
 function appendError(text) {
   const el = document.createElement("div");
   el.className = "msg error";
@@ -147,6 +161,7 @@ function appendError(text) {
   scrollBottom();
 }
 
+/** Create an empty bubble with a blinking cursor, ready to receive tokens. */
 function createStreamBubble(label, type) {
   const wrap = document.createElement("div");
   wrap.className = `msg ${type}`;
@@ -156,6 +171,7 @@ function createStreamBubble(label, type) {
   return wrap.querySelector(".msg-bubble");
 }
 
+/** Convert raw text → HTML via marked.js, with syntax highlighting + copy buttons. */
 function renderMarkdown(raw) {
   const html = marked.parse(raw);
   // Wrap in a temp container to inject copy buttons
@@ -187,6 +203,7 @@ function renderMarkdown(raw) {
   return tmp.innerHTML;
 }
 
+/** Append a streamed token to the active bubble and re-render markdown. */
 function appendToken(bubble, content) {
   bubble.classList.remove("cursor");
   bubble._raw = (bubble._raw || "") + content;
@@ -195,18 +212,22 @@ function appendToken(bubble, content) {
   scrollBottom();
 }
 
+/** Remove the blinking cursor and do a final markdown render. */
 function finalizeStreamBubble(bubble) {
   if (!bubble) return;
   bubble.classList.remove("cursor");
   if (bubble._raw) bubble.innerHTML = renderMarkdown(bubble._raw);
 }
 
-// ── Sidebar busy dots ────────────────────────────────────────────────────────
+// ── Sidebar busy indicators ──────────────────────────────────────────────────
+
+/** Show a pulsing yellow dot on a sidebar agent while it's working. */
 function setAgentBusy(agentId) {
   const dot = document.querySelector(`.agent-item[data-agent-id="${agentId}"] .dot`);
   if (dot) { dot.classList.remove("online"); dot.classList.add("busy"); }
 }
 
+/** Reset all sidebar dots back to green (idle). */
 function clearAllBusyDots() {
   document.querySelectorAll(".agent-item .dot.busy").forEach((d) => {
     d.classList.remove("busy");
@@ -214,7 +235,9 @@ function clearAllBusyDots() {
   });
 }
 
-// ── Interrupt cards ──────────────────────────────────────────────────────────
+// ── Interrupt cards (human-in-the-loop approval) ─────────────────────────────
+
+/** Show an approve/reject card when a dangerous tool needs user approval. */
 function buildInterruptCard({ interrupt_id, tool, args, description }) {
   const card = document.createElement("div");
   card.className = "interrupt-card";
@@ -237,6 +260,7 @@ function buildInterruptCard({ interrupt_id, tool, args, description }) {
   scrollBottom();
 }
 
+/** Send the user's approve/reject decision and dim the card. */
 function resolveInterrupt(id, decision) {
   socket.sendInterruptResponse(id, decision);
   const card = document.getElementById(`interrupt-${id}`);
@@ -247,7 +271,9 @@ function resolveInterrupt(id, decision) {
   }
 }
 
-// ── Send ──────────────────────────────────────────────────────────────────────
+// ── Send user message ────────────────────────────────────────────────────────
+
+/** Validate input, show user bubble, and send the message over WebSocket. */
 function sendMessage() {
   const text = msgInput.value.trim();
   if (!text || !socket?.ready || sending) return;
@@ -270,7 +296,9 @@ msgInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 });
 
-// ── Connect WebSocket ─────────────────────────────────────────────────────────
+// ── WebSocket connection ─────────────────────────────────────────────────────
+
+/** Create the ChatSocket and wire up all event handlers. */
 function connectChat() {
   socket = new ChatSocket({
     onStatus: (msg) => {
@@ -328,15 +356,16 @@ function connectChat() {
   socket.connect();
 }
 
-// ── Theme toggle ──────────────────────────────────────────────────────────────
+// ── Dark / light theme toggle ────────────────────────────────────────────────
 const themeToggle = document.getElementById("theme-toggle");
-const _THEME_KEY  = "seamate-theme";
+const THEME_STORAGE_KEY = "seamate-theme";
 
+/** Apply a theme ("dark" | "light") and persist to localStorage. */
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   themeToggle.textContent = theme === "dark" ? "☀" : "🌙";
   themeToggle.title = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
-  localStorage.setItem(_THEME_KEY, theme);
+  localStorage.setItem(THEME_STORAGE_KEY, theme);
   // Switch highlight.js theme
   const darkSheet  = document.getElementById("hljs-theme-dark");
   const lightSheet = document.getElementById("hljs-theme-light");
@@ -346,14 +375,14 @@ function applyTheme(theme) {
   }
 }
 
-applyTheme(localStorage.getItem(_THEME_KEY) || "dark");
+applyTheme(localStorage.getItem(THEME_STORAGE_KEY) || "dark");
 
 themeToggle.addEventListener("click", () => {
   const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
   applyTheme(next);
 });
 
-// ── Init ──────────────────────────────────────────────────────────────────────
+// ── Bootstrap ────────────────────────────────────────────────────────────────
 marked.setOptions({
   breaks: true,
   gfm: true,
