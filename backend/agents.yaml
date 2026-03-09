@@ -1,3 +1,11 @@
+# ── SeaMate Agent Team Configuration ──────────────────────────────────────────
+#
+# tools:  Registry names → resolved to callable Python functions (TOOL_REGISTRY)
+# skills: Paths to skill directories containing SKILL.md files (DeepAgents)
+#         See: https://agentskills.io/home
+#
+# Environment variables: ${VAR:-default}
+
 model:
   provider: ollama
   name: "${OLLAMA_MODEL:-gpt-oss:20b}"
@@ -10,10 +18,9 @@ orchestrator:
   # Uncomment below to override:
   # system_prompt: |
   #   You are SeaMate, ...
-  skills:
-    - delegate tasks
-    - coordinate subagents
-    - summarize results
+  tools: []                    # orchestrator's own tools (registry names)
+  skills:                      # paths to skill source directories
+    - "./skills/shared/"       # skills shared across all agents
 
 interrupt_on:
   - python_repl
@@ -28,6 +35,9 @@ subagents:
       to find accurate, up-to-date information. Always cite your sources.
     tools:
       - web_search
+    skills:
+      - "./skills/shared/"
+      - "./skills/researcher/"
 
   - name: coder
     description: "Writes and executes Python code or shell commands."
@@ -45,6 +55,9 @@ subagents:
     tools:
       - python_repl
       - run_command
+    skills:
+      - "./skills/shared/"
+      - "./skills/coder/"
 
   - name: file-manager
     description: "Reads and writes files on the local filesystem."
@@ -54,3 +67,6 @@ subagents:
     tools:
       - read_file
       - write_file
+    skills:
+      - "./skills/shared/"
+      - "./skills/file-manager/"

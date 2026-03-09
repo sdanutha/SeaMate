@@ -1,5 +1,9 @@
 """
 Agent registry — builds the /api/agents/ response from config.
+
+tools and skills are reported separately:
+- tools: [{name, description}] — callable Python functions
+- skills: [str] — paths to SKILL.md directories
 """
 
 from .config_loader import AgentTeamConfig
@@ -14,7 +18,13 @@ def build_agent_groups(config: AgentTeamConfig) -> dict:
                 "name": config.orchestrator_name,
                 "role": "orchestrator",
                 "system_prompt": config.orchestrator_prompt,
-                "tools": [],
+                "tools": [
+                    {
+                        "name": getattr(t, "name", str(t)),
+                        "description": getattr(t, "description", ""),
+                    }
+                    for t in config.orchestrator_tools
+                ],
                 "skills": config.orchestrator_skills,
             }
         ],
@@ -31,7 +41,7 @@ def build_agent_groups(config: AgentTeamConfig) -> dict:
                     }
                     for t in sa.tools
                 ],
-                "skills": [getattr(t, "name", str(t)) for t in sa.tools],
+                "skills": sa.skills,
             }
             for sa in config.subagents
         ],

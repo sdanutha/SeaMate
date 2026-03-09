@@ -1,5 +1,9 @@
 """
 Orchestrator factory — builds the LangGraph agent from config.
+
+Properly separates:
+- tools: callable Python functions (resolved from TOOL_REGISTRY)
+- skills: paths to SKILL.md directories (loaded by DeepAgents SkillsMiddleware)
 """
 
 from langchain_ollama import ChatOllama
@@ -18,6 +22,7 @@ def build_orchestrator(config: AgentTeamConfig, checkpointer):
             "description": sa.description,
             "system_prompt": sa.system_prompt,
             "tools": sa.tools,
+            **({"skills": sa.skills} if sa.skills else {}),
         }
         for sa in config.subagents
     ]
@@ -25,6 +30,8 @@ def build_orchestrator(config: AgentTeamConfig, checkpointer):
     return create_deep_agent(
         model=llm,
         system_prompt=config.orchestrator_prompt,
+        tools=config.orchestrator_tools or None,
+        skills=config.orchestrator_skills or None,
         subagents=subagents,
         checkpointer=checkpointer,
         interrupt_on=config.interrupt_on,

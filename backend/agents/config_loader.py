@@ -4,12 +4,13 @@ Config loader — reads agents.yaml and produces an AgentTeamConfig.
 Supports:
 - Environment variable interpolation: ${VAR:-default}
 - Tool resolution: tool name strings → callable objects from TOOL_REGISTRY
+- Skill paths: passed through as-is (paths to SKILL.md directories)
 - Auto-generated orchestrator prompt from subagent list
 """
 
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import yaml
 
@@ -23,7 +24,8 @@ class SubagentConfig:
     name: str
     description: str
     system_prompt: str
-    tools: list  # resolved callable tool objects
+    tools: list             # resolved callable tool objects
+    skills: list[str]       # paths to skill directories (SKILL.md)
 
 
 @dataclass
@@ -32,8 +34,9 @@ class AgentTeamConfig:
 
     orchestrator_name: str
     orchestrator_description: str
-    orchestrator_prompt: str  # auto-generated or explicit
-    orchestrator_skills: list[str]
+    orchestrator_prompt: str        # auto-generated or explicit
+    orchestrator_tools: list        # resolved callable tool objects
+    orchestrator_skills: list[str]  # paths to skill directories (SKILL.md)
     subagents: list[SubagentConfig]
     interrupt_on: dict[str, bool]
     model_name: str
@@ -58,12 +61,14 @@ def load_config(path: str) -> AgentTeamConfig:
     subagents: list[SubagentConfig] = []
     for sa in raw.get("subagents", []):
         tools = [_resolve_tool(name) for name in sa.get("tools", [])]
+        skills = sa.get("skills", [])
         subagents.append(
             SubagentConfig(
                 name=sa["name"],
                 description=sa.get("description", ""),
                 system_prompt=sa.get("system_prompt", "").strip(),
                 tools=tools,
+                skills=skills,
             )
         )
 
@@ -79,9 +84,9 @@ def load_config(path: str) -> AgentTeamConfig:
         orch_prompt = orch_prompt.strip()
     else:
         orch_prompt = _generate_prompt(orch_name, orch_desc, subagents)
-    orch_skills = orch.get(
-        "skills", ["delegate tasks", "coordinate subagents", "summarize results"]
-    )
+
+    orch_tools = [_resolve_tool(name) for name in orch.get("tools", [])]
+    orch_skills = orch.get("skills", [])
 
     # ── Interrupt rules ──────────────────────────────────────────────────
     interrupt_list = raw.get("interrupt_on", [])
@@ -91,6 +96,7 @@ def load_config(path: str) -> AgentTeamConfig:
         orchestrator_name=orch_name,
         orchestrator_description=orch_desc,
         orchestrator_prompt=orch_prompt,
+        orchestrator_tools=orch_tools,
         orchestrator_skills=orch_skills,
         subagents=subagents,
         interrupt_on=interrupt_on,
