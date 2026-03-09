@@ -5,7 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SeaMate — Multi-Agent Workspace</title>
   <link rel="stylesheet" href="/css/style.css" />
+  <!-- Markdown rendering -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Syntax highlighting -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css" id="hljs-theme-dark" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github.min.css" id="hljs-theme-light" disabled />
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js"></script>
 </head>
 <body>
 
@@ -40,6 +45,32 @@
         <button id="send-btn" disabled>Send</button>
       </div>
     </div>
+
+    <!-- ── Agent Detail Panel (hidden by default) ──────────── -->
+    <aside id="agent-detail" class="hidden">
+      <div class="detail-header">
+        <h3 id="detail-name"></h3>
+        <button id="detail-close" title="Close">✕</button>
+      </div>
+      <div class="detail-body">
+        <section class="detail-section">
+          <div class="detail-label">ROLE</div>
+          <div id="detail-role" class="detail-value"></div>
+        </section>
+        <section class="detail-section">
+          <div class="detail-label">SYSTEM PROMPT</div>
+          <pre id="detail-prompt" class="detail-prompt"></pre>
+        </section>
+        <section class="detail-section">
+          <div class="detail-label">TOOLS</div>
+          <div id="detail-tools" class="detail-tools"></div>
+        </section>
+        <section class="detail-section">
+          <div class="detail-label">SKILLS</div>
+          <div id="detail-skills" class="detail-skills"></div>
+        </section>
+      </div>
+    </aside>
   </div>
 
   <script type="module" src="/js/app.js"></script>

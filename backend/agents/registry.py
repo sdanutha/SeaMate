@@ -1,16 +1,38 @@
-from .base_agent import SUBAGENT_NAMES
+"""
+Agent registry — builds the /api/agents/ response from config.
+"""
 
-# SeaMate agent catalogue exposed to the frontend
-AGENT_GROUPS = {
-    "orchestrator": [
-        {"id": "seamate", "name": "seamate", "role": "orchestrator"},
-    ],
-    "subagents": [
-        {"id": name, "name": name, "role": "subagent"}
-        for name in SUBAGENT_NAMES
-    ],
-}
+from .config_loader import AgentTeamConfig
 
 
-def list_groups() -> dict:
-    return AGENT_GROUPS
+def build_agent_groups(config: AgentTeamConfig) -> dict:
+    """Build the agent catalogue dict used by the sidebar API."""
+    return {
+        "orchestrator": [
+            {
+                "id": config.orchestrator_name,
+                "name": config.orchestrator_name,
+                "role": "orchestrator",
+                "system_prompt": config.orchestrator_prompt,
+                "tools": [],
+                "skills": config.orchestrator_skills,
+            }
+        ],
+        "subagents": [
+            {
+                "id": sa.name,
+                "name": sa.name,
+                "role": "subagent",
+                "system_prompt": sa.system_prompt,
+                "tools": [
+                    {
+                        "name": getattr(t, "name", str(t)),
+                        "description": getattr(t, "description", ""),
+                    }
+                    for t in sa.tools
+                ],
+                "skills": [getattr(t, "name", str(t)) for t in sa.tools],
+            }
+            for sa in config.subagents
+        ],
+    }

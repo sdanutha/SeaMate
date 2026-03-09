@@ -1,5 +1,6 @@
 /**
- * Minimal WebSocket wrapper — connects to /ws (no session).
+ * WebSocket wrapper — handles chat messages, token streaming,
+ * subagent identification, and interrupt (approve/reject) flow.
  */
 export class ChatSocket {
   constructor(handlers = {}) {
@@ -17,11 +18,12 @@ export class ChatSocket {
       const msg = JSON.parse(data);
       const h = this.handlers;
       switch (msg.type) {
-        case "status":      h.onStatus?.(msg.content);    break;
-        case "agent_start": h.onAgentStart?.();            break;
-        case "agent_end":   h.onAgentEnd?.();              break;
-        case "token":       h.onToken?.(msg.content);      break;
-        case "error":       h.onError?.(msg.content);      break;
+        case "status":      h.onStatus?.(msg.content);                       break;
+        case "agent_start": h.onAgentStart?.();                              break;
+        case "agent_end":   h.onAgentEnd?.();                                break;
+        case "token":       h.onToken?.(msg.content, msg.agent || "seamate"); break;
+        case "interrupt":   h.onInterrupt?.(msg);                            break;
+        case "error":       h.onError?.(msg.content);                        break;
       }
     };
 
@@ -37,6 +39,15 @@ export class ChatSocket {
   sendMessage(text) {
     if (!this.ready) return;
     this.ws.send(JSON.stringify({ type: "message", message: text }));
+  }
+
+  sendInterruptResponse(interruptId, decision) {
+    if (!this.ready) return;
+    this.ws.send(JSON.stringify({
+      type: "interrupt_response",
+      interrupt_id: interruptId,
+      decision: decision,  // "approve" or "reject"
+    }));
   }
 
   disconnect() {
